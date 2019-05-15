@@ -1,0 +1,8 @@
+la base de datos se llama licas 
+
+me saque el codigo de 
+https://auth0.com/blog/sqlalchemy-orm-tutorial-for-python-developers/#SQLAlchemy-in-Practice
+
+https://auth0.com/blog/sqlalchemy-orm-tutorial-for-python-developers/#SQLAlchemy-in-Practice
+
+SI FUNCIONA !!!
