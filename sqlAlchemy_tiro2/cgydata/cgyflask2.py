@@ -23,8 +23,10 @@ def listcom():
 @app.route('/community/<name>')
 def getdata(name):
     lacom = community_queries.get_community_by_name(name)
-    #return "{}".format(lacom)
-    return json.dumps(lacom)
+    
+
+    #return json.dumps(lacom)
+    return lacom
 
 if __name__ == '__main__':
     app.run()

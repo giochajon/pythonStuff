@@ -48,26 +48,29 @@ def set_query_table():
     session = Session()
     return session
 
+session = set_query_table()
+
 def get_community_list():
 
-    session = set_query_table()
+    
     res = session.query(Communities) \
     .filter(Communities.cclass == 'Residential' ) \
     .all()
     result = []
     for item in res:
         result.append (item.name)
+        #session.close()
     return result
 
 def get_community_by_name(cname):
-    session = set_query_table()
+   
     res = session.query(Communities) \
     .filter(Communities.name == cname ) \
     .all()
     item = res[0]
-    return (f'"comm_code":  "{item.comm_code}" , "name": "{item.name}" ,"sector": "{item.sector}","class": "{item.cclass}" , "res_cnt": "{item.res_cnt}" , "dwell_cnt": "{item.dwell_cnt}", "comm_structure": "{item.comm_structure}","gcoord": "{item.gcoord}","gcenter":"{item.gcenter}"')
-    
-
+    #session.close()
+    resul = (f'"comm_code":  "{item.comm_code}" , "name": "{item.name}" ,"sector": "{item.sector}","class": "{item.cclass}" , "res_cnt": "{item.res_cnt}" , "dwell_cnt": "{item.dwell_cnt}", "comm_structure": "{item.comm_structure}","gcoord": {item.gcoord},"gcenter":{item.gcenter}')
+    return " [{%s}] "% resul
 
 
 #print (get_community_list())
