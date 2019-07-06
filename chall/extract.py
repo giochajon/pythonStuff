@@ -24,45 +24,38 @@ def exWithForce(source,target):
       os.makedirs(targetDir)
       
   else:    
-    print("Directory " , targetDir ,  " already exists") 
-
+    #print("Directory " , targetDir ,  " already exists") 
+    pass # quiet please
 
 
     #extract
   if  is_gz_file(source): # test gz file
-      target = target[0:-3] # .gz
-      print (target)
+      #target = target[0:-3] # .gz
       f = gzip.open(source)
       data = f.read()
       if os.path.exists(target):
          os.remove(target)
       fd = os.open( target, os.O_RDWR|os.O_CREAT )
-      uRet = os.write(fd,data) # this variable has the dec bytes
-      # next two lines to compare compressed vs noncompressed size
-      #print (cSiz)
-      #print (uRet)
-      
-      nLines = len(data.splitlines()) # save the number of lines before closing file
+      uRet = os.write(fd,data) # this variable has the size in bytes for the uncompressed file, we need to return
+      nLines = len(data.splitlines()) # save the number of lines before closing file, we need to return
       
       os.close(fd)
-      return {"compSize": cSiz, "unCompSize": uRet, "numLines": nLines}
-
+      
 
   else:
       # is a bz2 file
-      target = target[0:-4]
-      print (target)
+      #target = target[0:-4]
       f = bz2.open(source)
       data = f.read()
       if os.path.exists(target):
          os.remove(target)
       fd = os.open( target, os.O_RDWR|os.O_CREAT )
-      uRet = os.write(fd,data) # this variable has the dec bytes
-      # next two lines to compare compressed vs noncompressed size
-      #print (cSiz)
-      #print (uRet)
+      uRet = os.write(fd,data) # this variable has the size in bytes for the uncompressed file, we need to return 
+      nLines = len(data.splitlines()) # save the number of lines before closing file, we need to return
+      
       os.close(fd)
-      return uRet
+    
+  return {"compSize": cSiz, "unCompSize": uRet, "numLines": nLines}
 
 # this function fullfills the requisite of not using extensions to figure out compression
 def is_gz_file(filepath):
