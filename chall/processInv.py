@@ -1,75 +1,104 @@
 import csv
-import extract
+import extract #this is my extract.py file 
 import time
-from multiprocessing import Process
+import multiprocessing as mp
 
-t = time.time() # to calculate execution time (test using the pool)
-data = csv.DictReader(open("inventory.csv", 'r'))
+####################################################
+#   This is the main program for the challenge
+#   1. Parses the csv (processCurveCsv)
+#   2. Processes the file (processLine)
+#   3. Creates log upon completion (createSummary)
+#   it supports multiprocess paralelism.
+####################################################
 
-# remember the order: Bucket, StorageClass, Type (app, database YYYY MM DD), and Date 
-
-summary: dict = {} # initialize the dictionary to store the stats for buckets
-typeSummary: dict = {}
-
-for row in data:
-
-   lBucket = row ['Bucket']
-   lStorageClass = row ['StorageClass']
-   lOrigin = "./remoteobjects/"+lBucket +"/"+ row['Key']
-   lKey = row['Key'].split("/")
-   lType = lKey[3]
-   lYear = lKey[0]
-   lMonth = lKey[1]
-   lDay = lKey[2]
-   lDirName = "./processedobjects/" +lBucket +"/"+lStorageClass+"/"+lType+"/"+lYear+"/"+lMonth+"/"+lDay+"/"
-   lNoExt = ".".join(lKey[-1].split(".")[0:-1])  # remove everyting after the last dot in the filename
-   lNoExtB = "".join(lKey[-1].split(".")[0]) # subtype of log error / reques / query
-
-
-   lTargetFile = lDirName + lNoExt
-
-   #print (lOrigin,lTargetFile) # test to verify that the passed arguments are correct 
-    
+# process that extracts and places the file (usung multiprocessig)
+def processLine(lOrigin,lTargetFile,lBucket,lType,lNoExtB):
    # extract
-   resultStat = extract.exWithForce(lOrigin,lTargetFile)   
-   print("read compressed "+ str(resultStat["compSize"])+  " bytes, wrote "+ str(resultStat['unCompSize']) + " bytes from file, number of lines: "+ str(resultStat['numLines']))
+   resultStat = extract.exWithForce(lOrigin,lTargetFile)
+   resultStat.update ({"bucket":lBucket})
+   resultStat.update ({"type": lType+" "+lNoExtB })
+   output.put(resultStat)
 
-   #create summary  elements are: 0=compressed Size, 1 uncompressed size, 2 Number of lines 
-   if  lBucket in summary.keys():
-        summary[lBucket][0] += resultStat["compSize"]
-        summary[lBucket][1] += resultStat["unCompSize"]
-        #summary[lBucket][2] +=resultStat['numLines']
-   else:
-        summary[lBucket] = []
-        summary[lBucket].append (resultStat["compSize"]) 
-        summary[lBucket].append (resultStat["unCompSize"])
-        #summary[lBucket].append (resultStat['numLines'])
+# process to create the summary on succesfull completion 
+def createSummary(resultArray): 
+     summary: dict = {} # initialize the dictionary to store the stats for buckets
+     typeSummary: dict = {}
+     
+     for resultStat in resultArray:
+         #create summary  elements are: 0=compressed Size, 1 uncompressed size
+         if  resultStat["bucket"] in summary.keys():
+               summary[resultStat["bucket"]][0] += resultStat["compSize"]
+               summary[resultStat["bucket"]][1] += resultStat["unCompSize"]
+         else:
+               summary[resultStat["bucket"]] = []
+               summary[resultStat["bucket"]].append (resultStat["compSize"]) 
+               summary[resultStat["bucket"]].append (resultStat["unCompSize"])
 
-     # populating sumary by type 
-   if  lType +" "+lNoExtB in typeSummary.keys():
-        typeSummary[lType +" "+lNoExtB] += resultStat['numLines']
-   else:
-        typeSummary[lType +" "+lNoExtB] = (resultStat['numLines'])
+      # populating sumary by type 
+         if  resultStat["type"] in typeSummary.keys():
+               typeSummary[resultStat["type"]] += resultStat['numLines']
+         else:
+               typeSummary[resultStat["type"]] = (resultStat['numLines'])
         
-# printing the summary after the process. 
-  
-print ("-" * 50)
-print ("Summary for the log processing operation: ")
+      #printing the summary after the process. 
+     
+     print ("-" * 50)
+     print ("Summary for the log processing operation: ")
 
-print ("-" * 50)
-for key,val in summary.items():
-    print ("-\t Bucket:" +key )
-    print( "-\t Total Bytes in compressed files: " +str(val[0])  ) 
-    print( "-\t Total Bytes decompresed: " + str(val[1])  ) 
-    #print( "-\t Number of lines: "   +str(val[2])  )
-    print ("-" * 50)
+     print ("-" * 50)
+     for key,val in summary.items():
+          print ("-\t Bucket:" +key )
+          print( "-\t Total Bytes in compressed files: " +str(val[0])  ) 
+          print( "-\t Total Bytes decompresed: " + str(val[1])  ) 
+          print ("-" * 50)
 
-print ("." * 50)
-print (".   Number of Lines by type:")
-print ("." * 50)
-for key,val in typeSummary.items():
-     print (".\t "+key + ": " +str(val)  )
-print ("." * 50)
+     print ("." * 50)
+     print (".   Number of Lines by type:")
+     print ("." * 50)
+     for key,val in typeSummary.items():
+          print (".\t "+key + ": " +str(val)  )
+     print ("." * 50)
+     print ('==== execution time: '+  str(time.time() - t) + "   ========" ) 
 
 
-print ('==== execution time: '+  str(time.time() - t) + "   =========" ) 
+# global variables
+t = time.time() # to calculate execution time (test using the pool)
+output = mp.Queue()
+processes = []
+ 
+
+
+def processCurveCsv():
+
+   data = csv.DictReader(open("inventory.csv", 'r'))
+   # remember the order: Bucket, StorageClass, Type (app, database YYYY MM DD), and Date
+   # break apart the csv into variables 
+   for row in data:
+      lBucket = row ['Bucket']
+      lStorageClass = row ['StorageClass']
+      lOrigin = "./remoteobjects/"+lBucket +"/"+ row['Key']
+      lKey = row['Key'].split("/")
+      lType = lKey[3]
+      lYear = lKey[0]
+      lMonth = lKey[1]
+      lDay = lKey[2]
+      lDirName = "./processedobjects/" +lBucket +"/"+lStorageClass+"/"+lType+"/"+lYear+"/"+lMonth+"/"+lDay+"/"
+      lNoExt = ".".join(lKey[-1].split(".")[0:-1])  # remove everyting after the last dot in the filename
+      lNoExtB = "".join(lKey[-1].split(".")[0]) # subtype of log error / reques / query
+      lTargetFile = lDirName + lNoExt
+
+      # ******* Setup multiprocessing processes
+      processes.append (mp.Process(target=processLine, args=(lOrigin,lTargetFile,lBucket,lType,lNoExtB)))
+
+   # Run processes
+   for p in processes:
+      p.start()
+   # gather processes
+   for p in processes:
+      p.join()
+   # Get all process results from the output queue and form array for summary
+   results = [output.get() for p in processes]
+   createSummary (results)
+ 
+if __name__ == '__main__':
+    processCurveCsv()

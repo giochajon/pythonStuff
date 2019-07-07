@@ -5,7 +5,7 @@ import sys
 import os
 import binascii 
 
-###################################
+#################################
 #  extract with force will extract a source file into a target
 #  the target path will be forced to be created
 #  used by processInv.py to extract one logfiles 
@@ -20,8 +20,12 @@ def exWithForce(source,target):
   cSiz = os.stat(source).st_size # this var has compressed size 
 
 # Create target directory & all intermediate directories if don't exists
-  if not os.path.exists(targetDir):
-      os.makedirs(targetDir)
+  try:     
+    if not os.path.exists(targetDir):
+      os.makedirs(targetDir,exist_ok=True)
+  except OSError as err:
+        print(err)
+        pass    
       
   else:    
     #print("Directory " , targetDir ,  " already exists") 
