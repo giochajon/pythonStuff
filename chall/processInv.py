@@ -1,14 +1,15 @@
 import csv
 import extract
+import time
 from multiprocessing import Process
 
+t = time.time() # to calculate execution time (test using the pool)
 data = csv.DictReader(open("inventory.csv", 'r'))
 
 # remember the order: Bucket, StorageClass, Type (app, database YYYY MM DD), and Date 
 
-a=0
-summary: dict = {} # initialize the dictionary to store the stats
-
+summary: dict = {} # initialize the dictionary to store the stats for buckets
+typeSummary: dict = {}
 
 for row in data:
 
@@ -22,7 +23,9 @@ for row in data:
    lDay = lKey[2]
    lDirName = "./processedobjects/" +lBucket +"/"+lStorageClass+"/"+lType+"/"+lYear+"/"+lMonth+"/"+lDay+"/"
    lNoExt = ".".join(lKey[-1].split(".")[0:-1])  # remove everyting after the last dot in the filename
-   
+   lNoExtB = "".join(lKey[-1].split(".")[0]) # subtype of log error / reques / query
+
+
    lTargetFile = lDirName + lNoExt
 
    #print (lOrigin,lTargetFile) # test to verify that the passed arguments are correct 
@@ -35,23 +38,38 @@ for row in data:
    if  lBucket in summary.keys():
         summary[lBucket][0] += resultStat["compSize"]
         summary[lBucket][1] += resultStat["unCompSize"]
-        summary[lBucket][2] +=resultStat['numLines']
+        #summary[lBucket][2] +=resultStat['numLines']
    else:
         summary[lBucket] = []
         summary[lBucket].append (resultStat["compSize"]) 
         summary[lBucket].append (resultStat["unCompSize"])
-        summary[lBucket].append (resultStat['numLines'])
-   a += 1 
-   if a == 2:
-       break
+        #summary[lBucket].append (resultStat['numLines'])
 
-print (summary)
+     # populating sumary by type 
+   if  lType +" "+lNoExtB in typeSummary.keys():
+        typeSummary[lType +" "+lNoExtB] += resultStat['numLines']
+   else:
+        typeSummary[lType +" "+lNoExtB] = (resultStat['numLines'])
+        
+# printing the summary after the process. 
+  
 print ("-" * 50)
 print ("Summary for the log processing operation: ")
 
 print ("-" * 50)
 for key,val in summary.items():
     print ("-\t Bucket:" +key )
-    print( "-\t Total Bytes in compressed files:" +str(val[0])  ) 
+    print( "-\t Total Bytes in compressed files: " +str(val[0])  ) 
     print( "-\t Total Bytes decompresed: " + str(val[1])  ) 
-    print( "-\t Number of lines: "   +str(val[2])  )
+    #print( "-\t Number of lines: "   +str(val[2])  )
+    print ("-" * 50)
+
+print ("." * 50)
+print (".   Number of Lines by type:")
+print ("." * 50)
+for key,val in typeSummary.items():
+     print (".\t "+key + ": " +str(val)  )
+print ("." * 50)
+
+
+print ('==== execution time: '+  str(time.time() - t) + "   =========" ) 
