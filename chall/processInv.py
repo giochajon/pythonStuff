@@ -42,63 +42,67 @@ def createSummary(resultArray):
         
       #printing the summary after the process. 
      
-     print ("-" * 50)
-     print ("Summary for the log processing operation: ")
+     #print ("-" * 50)
+     #print ("Summary for the log processing operation: ")
 
-     print ("-" * 50)
+     #print ("-" * 50)
+     print ("")
      for key,val in summary.items():
-          print ("-\t Bucket:" +key )
-          print( "-\t Total Bytes in compressed files: " +str(val[0])  ) 
-          print( "-\t Total Bytes decompresed: " + str(val[1])  ) 
-          print ("-" * 50)
-
-     print ("." * 50)
-     print (".   Number of Lines by type:")
-     print ("." * 50)
+          print ("")
+          print ("Bucket:" + key.capitalize() )
+          print( "Total file size of all compressed objects " +str(val[0])  ) 
+          print( "Total Bytes decompresed: " + str(val[1])  ) 
+   
+     print ("")
+     print ("Total number of lines in logs, by type:")
      for key,val in typeSummary.items():
-          print (".\t "+key + ": " +str(val)  )
-     print ("." * 50)
-     print ('==== execution time: '+  str(time.time() - t) + "   ========" ) 
+          print ("")
+          print (key.capitalize() + ": " +str(val)  )
+     #print ('==== execution time: '+  str(time.time() - t) + "   ========" ) 
 
 
 # global variables
-t = time.time() # to calculate execution time (test using the pool)
+#t = time.time() # to calculate execution time (test using the pool)
 output = mp.Queue()
 processes = []
  
 
 
 def processCurveCsv():
-
-   data = csv.DictReader(open("inventory.csv", 'r'))
+   try:
+         data = csv.DictReader(open("inventory.csv", 'r'))
+        
    # remember the order: Bucket, StorageClass, Type (app, database YYYY MM DD), and Date
    # break apart the csv into variables 
-   for row in data:
-      lBucket = row ['Bucket']
-      lStorageClass = row ['StorageClass']
-      lOrigin = "./remoteobjects/"+lBucket +"/"+ row['Key']
-      lKey = row['Key'].split("/")
-      lType = lKey[3]
-      lYear = lKey[0]
-      lMonth = lKey[1]
-      lDay = lKey[2]
-      lDirName = "./processedobjects/" +lBucket +"/"+lStorageClass+"/"+lType+"/"+lYear+"/"+lMonth+"/"+lDay+"/"
-      lNoExt = ".".join(lKey[-1].split(".")[0:-1])  # remove everyting after the last dot in the filename
-      lNoExtB = "".join(lKey[-1].split(".")[0]) # subtype of log error / reques / query
-      lTargetFile = lDirName + lNoExt
+         for row in data:
+            lBucket = row ['Bucket']
+            lStorageClass = row ['StorageClass']
+            lOrigin = "./remoteobjects/"+lBucket +"/"+ row['Key']
+            lKey = row['Key'].split("/")
+            lType = lKey[3]
+            lYear = lKey[0]
+            lMonth = lKey[1]
+            lDay = lKey[2]
+            lDirName = "./processedobjects/" +lBucket +"/"+lStorageClass+"/"+lType+"/"+lYear+"/"+lMonth+"/"+lDay+"/"
+            lNoExt = ".".join(lKey[-1].split(".")[0:-1])  # remove everyting after the last dot in the filename
+            lNoExtB = "".join(lKey[-1].split(".")[0]) # subtype of log error / reques / query
+            lTargetFile = lDirName + lNoExt
 
-      # ******* Setup multiprocessing processes
-      processes.append (mp.Process(target=processLine, args=(lOrigin,lTargetFile,lBucket,lType,lNoExtB)))
+            # ******* Setup multiprocessing processes
+            processes.append (mp.Process(target=processLine, args=(lOrigin,lTargetFile,lBucket,lType,lNoExtB)))
 
-   # Run processes
-   for p in processes:
-      p.start()
-   # gather processes
-   for p in processes:
-      p.join()
-   # Get all process results from the output queue and form array for summary
-   results = [output.get() for p in processes]
-   createSummary (results)
- 
+         # Run processes
+         for p in processes:
+            p.start()
+         # gather processes
+         for p in processes:
+            p.join()
+         # Get all process results from the output queue and form array for summary
+         results = [output.get() for p in processes]
+         createSummary (results)
+   except FileNotFoundError:
+      print ("Error:could not find inventory.csv file, please place  processInv.py (this file) and extract.py in the same folder as the inventory file. ")
+
+
 if __name__ == '__main__':
     processCurveCsv()

@@ -93,9 +93,13 @@ def whichComp(filepath):
 #  command line options
 
 if __name__ == "__main__":
-    target = sys.argv[2]
-    source = sys.argv[1]
-    retby = exWithForce(source,target)
-    typ = whichComp(source)
-    print("wrote "+ str(retby['unCompSize']) + " bytes from file, compression type: " +str(typ) + ", number of lines: "+ str(retby['numLines']))
-    
+    try:
+        target = sys.argv[2]
+        source = sys.argv[1]
+        retby = exWithForce(source,target)
+        typ = whichComp(source)
+        print("wrote "+ str(retby['unCompSize']) + " bytes from file, compression type: " +str(typ) + ", number of lines: "+ str(retby['numLines']))
+    except: 
+        print("please provide a full path of the source log file and its destination: ")
+        print("USAGE:  python extract.py ./errors.log.gz ./gio.txt  ")
+        
