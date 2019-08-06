@@ -1,9 +1,25 @@
 from django.http import HttpResponse
 from django.shortcuts import render
-
+import operator
 
 def home(request):
-    return render(request,'home.html',{'hithere':'this is me'})
+    return render(request,'home.html')
 
-def eggs(request):
-    return HttpResponse('<h1>Eggs</h1>')
+def count(request):
+    fulltext = request.GET['fulltext']
+    wordlist = fulltext.split()
+
+    worddictionary ={}
+
+    for word in wordlist:
+        if word in worddictionary:
+            # increase in dictionary
+            worddictionary[word] +=1
+        else:
+            # add tor dictionary
+            worddictionary[word] = 1 
+
+
+    sortedwords = sorted(worddictionary.items(),key=operator.itemgetter(1),reverse=True)
+    #print(fulltext)
+    return render(request,'count.html', {'fulltext':fulltext, 'count':len(wordlist), 'worddictionary':sortedwords})
