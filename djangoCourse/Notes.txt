@@ -1,0 +1,30 @@
+
+
+Steps
+
+1. first create the model
+in models.py
+
+such as
+class Blog(models.Model):
+    
+    title = models.CharField(max_length=50)
+    pubdate = models.DateField
+    body = models.TextField
+    image = models.ImageField(upload_to ='images/') 
+
+
+2. then add in settings.py the App
+
+INSTALLED_APPS = [
+    'jobs.apps.JobsConfig',
+    'blog.apps.BlogConfig', 
+
+3. Create a migration
+
+python3 manage.py makemigrations
+
+4. Migrate
+python3 manage.py migrate
+
+5. run the server and add to the admin
