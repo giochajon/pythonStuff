@@ -1,4 +1,34 @@
 
+142.93.158.228
+django digital ocean password
+PanoChamick3yMou5#rser
+
+library to format the dates 
+C0digo!@#
+
+user djangodeploy 
+Rat@d3TresPat!tas
+
+djangodbman
+ePanoMou5#rser
+
+
+    ALTER ROLE djangodbman SET client_encoding TO 'utf8';
+    ALTER ROLE djangodbman SET default_transaction_isolation TO 'read committed';
+    ALTER ROLE djangodbman SET timezone TO 'UTC';
+
+GRANT ALL PRIVILEGES ON DATABASE portfoliodb TO djangodbman;
+
+scp portfolio-project.zip djangodeploy@142.93.158.228:~
+scp requirements.txt djangodeploy@142.93.158.228:~
+
+
+superuser 
+giovas Chewb@123
+
+
+gunicorn --bind 0.0.0.0:8000 portfolio.wsgi
+===========
 
 Steps
 
@@ -27,4 +57,12 @@ python3 manage.py makemigrations
 4. Migrate
 python3 manage.py migrate
 
-5. run the server and add to the admin
+5. in admin.py register the model adding:
+
+from .models import Blog
+
+admin.site.register(Blog)
+
+6. run the server and add to the admin in http://localhost:8000/admin/ remember giovas django123
+
+
