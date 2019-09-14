@@ -1,0 +1,8 @@
+uno 1
+dos 2
+tres 3
+cuatro four
+cinq 5
+seis 6
+siete 7
+ocho 8

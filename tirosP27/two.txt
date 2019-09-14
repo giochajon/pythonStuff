@@ -1,0 +1,9 @@
+uno 1
+dos 2
+tres 3
+cuatro cua
+cinco 5
+seis 6 
+siete 72
+sietecinco 7.5
+ocho 8
