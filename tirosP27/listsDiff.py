@@ -5,7 +5,7 @@ def printSummary(a,b):
     q = set (a.keys()) - set(b.keys())
     count = 0 
     for item in q:
-        print item
+        print (item +' '+ a[item])
         count +=1 
     print ('----- ----- ----- total ' + str(count))           
 
@@ -14,7 +14,7 @@ def printSummary(a,b):
     w = set (b.keys()) - set(a.keys()) 
     count = 0
     for item in w:
-        print item 
+        print (item +' '+ b[item])
         count +=1
     print ('----- ----- ----- total ' + str(count))           
     
