@@ -1,7 +1,7 @@
 import sys
 
 def printSummary(a,b):
-    print ('----- ----- ----- values in first list not in second:')
+    print ('----- ----- ----- values in first list, and not in the second:')
     q = set (a.keys()) - set(b.keys())
     count = 0 
     for item in q:
@@ -10,7 +10,7 @@ def printSummary(a,b):
     print ('----- ----- ----- total ' + str(count))           
 
 
-    print ('----- ----- ----- values in second list not in first:')
+    print ('----- ----- ----- values in second list, but not in the first:')
     w = set (b.keys()) - set(a.keys()) 
     count = 0
     for item in w:
@@ -25,7 +25,7 @@ def printSummary(a,b):
     s =  (w | q) 
     
 
-    print '----- ----- ----- Different values: '
+    print '----- ----- -----Same keys  Different values: '
     
     # put repeated values in list 
     l = []
