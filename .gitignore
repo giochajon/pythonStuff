@@ -1,0 +1,3 @@
+# list of files not to be included 
+FlaskJerigonza/node_modules/
+FlaskJerigonza/package-lock.json
