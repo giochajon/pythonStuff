@@ -5,71 +5,76 @@ import io
 
 def play_audio(audio_data):
     """Plays back the captured AudioData object directly from memory."""
-    # Convert the audio data to a WAV format byte stream
     wav_bytes = audio_data.get_wav_data()
     wav_stream = io.BytesIO(wav_bytes)
 
-    # Read the WAV stream
     wf = wave.open(wav_stream, 'rb')
-
-    # Initialize PyAudio for playback
     p = pyaudio.PyAudio()
+    
     stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
                     channels=wf.getnchannels(),
                     rate=wf.getframerate(),
                     output=True)
 
-    # Play the audio in chunks
     chunk = 1024
     data = wf.readframes(chunk)
     while data:
         stream.write(data)
         data = wf.readframes(chunk)
 
-    # Cleanup playback
     stream.stop_stream()
     stream.close()
     p.terminate()
 
 def main():
-    # Initialize the recognizer
     r = sr.Recognizer()
     
-    # Set the silence threshold to exactly 2.0 seconds
-    # The recognizer will wait for 2 seconds of silence before finishing the recording
-    r.pause_threshold = 2.0  
-
     with sr.Microphone() as source:
         print("Adjusting for background noise... please remain quiet.")
-        # This listens for 2 seconds to establish the background noise floor
         r.adjust_for_ambient_noise(source, duration=2)
-        print("\nListening...")
-        print("(Say something containing the word 'repeat'. It will process after 2 seconds of silence)")
+        
+        # FIX 1: Turn off dynamic volume adjustment so the 2-second silence works properly
+        r.dynamic_energy_threshold = False  
 
-        while True:
+        print("\n--- PHASE 1 ---")
+        print("Listening for the trigger word: 'repeat'...")
+        
+        # Set a short pause threshold just for catching the wake word quickly
+        r.pause_threshold = 0.8 
+        trigger_detected = False
+        
+        while not trigger_detected:
             try:
-                # Listen to the microphone
-                audio = r.listen(source)
-
-                # Recognize speech using Google's free Web Speech API
-                text = r.recognize_google(audio).lower()
-                print(f"Heard: \"{text}\"")
-
-                # Check for the trigger word
+                wake_audio = r.listen(source)
+                text = r.recognize_google(wake_audio).lower()
+                
                 if "repeat" in text:
-                    print("\nTrigger word 'repeat' detected!")
-                    print("Playing back the audio...")
-                    play_audio(audio)
-                    print("Finished playing. Stopping program.")
-                    break # Exits the loop and stops the program
-
+                    trigger_detected = True
+                    print("\n[Trigger 'repeat' detected!]")
             except sr.UnknownValueError:
-                # This happens if it hears a noise but can't translate it to human speech
-                print("[No recognizable speech detected, listening again...]")
+                pass # Ignore background noises
             except sr.RequestError as e:
-                # This happens if your internet connection fails
-                print(f"Could not request results from Google Speech Recognition service; {e}")
-                break
+                print(f"Internet connection error: {e}")
+                return
+
+        print("\n--- PHASE 2 ---")
+        print("Now recording your message...")
+        print("(It will stop recording and play back after exactly 2 seconds of silence)")
+        
+        # FIX 2: Set the strict 2-second silence threshold for the actual recording
+        r.pause_threshold = 2.0  
+        
+        try:
+            # This captures the audio AFTER the trigger word was spoken
+            message_audio = r.listen(source)
+            
+            print("\n2 seconds of silence detected! Playing back audio...")
+            play_audio(message_audio)
+            
+            print("\nFinished playing. Stopping program.")
+            
+        except Exception as e:
+            print(f"An error occurred during recording: {e}")
 
 if __name__ == "__main__":
     main()
