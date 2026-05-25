@@ -44,3 +44,10 @@ Step 4: Test with index.htm
     Type a phrase (e.g., esta es una prueba) into the text box and click Translate.
 
     The interface will connect to your local Node.js API and display the result: Result: efestafa ess ufunafa prufuefebafa.
+
+
+
+New example on how to use version 2 from command line:
+curl -X POST http://127.0.0.1:5000/jerigonza \
+     -H "Content-Type: application/json" \
+     -d '{"text": "hola mundo", "filler": "p"}'    

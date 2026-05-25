@@ -1,48 +1,43 @@
+import argparse
+import sys
 
-def jerigonza(text):
-    # Define vowels (including accented ones for better language support)
-    vowels = "aeiouáéíóúAEIOUÁÉÍÓÚ"
-    words = text.split()
-    processed_words = []
-
-    for word in words:
-        if not word:
-            continue
-            
-        # Check if the word ends in a vowel
-        if word[-1].lower() in vowels:
-            # Rule 1: For each vowel, add 'f' and the same vowel after it
-            transformed = ""
-            for char in word:
-                if char.lower() in vowels:
-                    # We append the original char + 'f' + the lowercase version
-                    transformed += char + 'f' + char.lower()
-                else:
-                    transformed += char
-            processed_words.append(transformed)
-            
+def jerigonza(text, filler='f'):
+    """
+    Transforms text into Spanish Jerigonza.
+    """
+    vowels = "aeiouáéíóúüAEIOUÁÉÍÓÚÜ"
+    transformed = ""
+    
+    for char in text:
+        if char in vowels:
+            transformed += char + filler + char.lower()
         else:
-            # Rule 2: Exception for words ending in a consonant
-            # Find the index of the last vowel in the word
-            last_vowel_idx = -1
-            for i in range(len(word) - 1, -1, -1):
-                if word[i].lower() in vowels:
-                    last_vowel_idx = i
-                    break
+            transformed += char
             
-            if last_vowel_idx != -1:
-                # Add the ending consonant immediately after the last vowel
-                ending_consonant = word[-1]
-                transformed = (
-                    word[:last_vowel_idx + 1] + 
-                    ending_consonant + 
-                    word[last_vowel_idx + 1:]
-                )
-                processed_words.append(transformed)
-            else:
-                # If there are no vowels (e.g., "sky"), keep the word as is
-                processed_words.append(word)
+    return transformed
 
-    return " ".join(processed_words)
+def main():
+    # Set up the command line argument parser
+    parser = argparse.ArgumentParser(description="Translate text to Spanish Jerigonza.")
+    parser.add_argument("text", nargs="*", help="The text to translate")
+    parser.add_argument("-f", "--filler", default="f", choices=['f', 'p'], 
+                        help="The consonant to use as a filler ('f' or 'p')")
+    
+    args = parser.parse_args()
+    
+    # Join text arguments into a single string
+    input_text = " ".join(args.text)
+    
+    # Allow reading from standard input (pipes) if no text argument is passed
+    if not input_text:
+        if not sys.stdin.isatty():
+            input_text = sys.stdin.read().strip()
+        else:
+            parser.error("No text provided to translate.")
+            
+    # Print the result to the console
+    print(jerigonza(input_text, filler=args.filler))
 
-print (jerigonza("esta es una prueba"))
+# This block only runs if the script is executed directly from the terminal
+if __name__ == "__main__":
+    main()
