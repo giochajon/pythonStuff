@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transmission Manager</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #4f8ef7;
+    --accent-h: #6aa0ff;
+    --danger: #e05c5c;
+    --danger-h: #f07070;
+    --success: #4caf7d;
+    --warn: #f0a840;
+    --text: #d8dce8;
+    --text-muted: #7a80a0;
+    --radius: 8px;
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 18px; font-weight: 600; letter-spacing: .5px; color: #fff; }
+  header .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); }
+
+  main { max-width: 1300px; margin: 0 auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* Connection bar */
+  .conn-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; }
+  .conn-bar h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 12px; }
+  .conn-fields { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .conn-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+  .conn-fields label span { font-size: 11px; }
+  .conn-fields input[type=text],
+  .conn-fields input[type=number],
+  .conn-fields input[type=password] { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; color: var(--text); padding: 6px 10px; font-size: 14px; width: 160px; outline: none; transition: border-color .15s; }
+  .conn-fields input:focus { border-color: var(--accent); }
+  .conn-fields input.err { border-color: var(--danger) !important; }
+
+  /* Panels */
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .panels { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .panel h2 { font-size: 15px; font-weight: 600; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+  .field-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .field-row label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+  .field-row input[type=number] { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; color: var(--text); padding: 6px 10px; font-size: 14px; width: 120px; outline: none; transition: border-color .15s; }
+  .field-row input:focus { border-color: var(--accent); }
+  .field-row input.err { border-color: var(--danger) !important; }
+
+  textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; color: var(--text); padding: 10px; font-size: 13px; font-family: monospace; resize: vertical; outline: none; transition: border-color .15s; min-height: 130px; }
+  textarea:focus { border-color: var(--accent); }
+  textarea.err { border-color: var(--danger) !important; }
+  textarea + .field-hint { font-size: 11px; color: var(--text-muted); margin-top: -10px; }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  button { cursor: pointer; border: none; border-radius: 5px; padding: 8px 18px; font-size: 13px; font-weight: 500; transition: background .15s, opacity .15s; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-scan { background: var(--accent); color: #fff; }
+  .btn-scan:hover:not(:disabled) { background: var(--accent-h); }
+  .btn-pause { background: var(--danger); color: #fff; }
+  .btn-pause:hover:not(:disabled) { background: var(--danger-h); }
+
+  /* Status / alerts */
+  .status-msg { font-size: 13px; padding: 8px 12px; border-radius: 5px; display: none; }
+  .status-msg.show { display: block; }
+  .status-msg.info  { background: #1a2a4a; border: 1px solid #2a4a8a; color: #9ac0ff; }
+  .status-msg.ok    { background: #1a3a28; border: 1px solid #2a6040; color: #80e0a0; }
+  .status-msg.err   { background: #3a1a1a; border: 1px solid #8a2a2a; color: #ff9090; }
+  .status-msg.warn  { background: #3a2a10; border: 1px solid #8a5a10; color: #f0c060; }
+
+  /* Results table */
+  .results-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--text-muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-seeding  { background: #1a3a28; color: var(--success); }
+  .badge-stopped  { background: #2a2a2a; color: var(--text-muted); }
+  .badge-other    { background: #2a2a10; color: var(--warn); }
+  .badge-ep       { background: #1a2a4a; color: var(--accent); }
+  .score-bar-wrap { width: 60px; height: 6px; background: var(--surface2); border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+  .score-bar      { height: 100%; border-radius: 3px; background: var(--accent); }
+  .summary-row    { font-size: 12px; color: var(--text-muted); padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dot" id="status-dot" title="Connection not tested"></div>
+  <h1>Transmission Manager</h1>
+</header>
+
+<main>
+
+  <!-- Connection bar -->
+  <section class="conn-bar">
+    <h2>Connection Settings</h2>
+    <div class="conn-fields">
+      <label><span>Host</span><input type="text" id="c-host" value="localhost" placeholder="localhost"></label>
+      <label><span>Port</span><input type="number" id="c-port" value="9091" min="1" max="65535" placeholder="9091"></label>
+      <label><span>Username</span><input type="text" id="c-user" placeholder="(optional)"></label>
+      <label><span>Password</span><input type="password" id="c-pass" placeholder="(optional)"></label>
+    </div>
+  </section>
+
+  <div class="panels">
+
+    <!-- ── Pause by Ratio ── -->
+    <section class="panel">
+      <h2>⏸ Pause by Ratio</h2>
+
+      <div class="field-row">
+        <label>
+          <span>Minimum Ratio</span>
+          <input type="number" id="r-ratio" value="2.0" min="0.01" step="0.1" placeholder="2.0">
+        </label>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-scan" onclick="ratioScan()">Scan</button>
+        <button class="btn-pause" id="r-pause-btn" onclick="ratioPause()" disabled>Pause Matched</button>
+      </div>
+
+      <div class="status-msg" id="r-status"></div>
+      <div class="results-wrap" id="r-results"></div>
+    </section>
+
+    <!-- ── Pause by List ── -->
+    <section class="panel">
+      <h2>📋 Pause by List</h2>
+
+      <div class="field-row">
+        <label>
+          <span>Match Threshold (0 – 1)</span>
+          <input type="number" id="l-threshold" value="0.8" min="0.01" max="1.0" step="0.05" placeholder="0.8">
+        </label>
+      </div>
+
+      <div>
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">
+          Torrent name list — paste any text, names will be extracted
+        </label>
+        <textarea id="l-glob" placeholder="Paste text containing torrent names here…&#10;&#10;Can include extra text, URLs, or other noise — the matcher will find names automatically."></textarea>
+        <div class="field-hint">TV episodes (S01E02) require an exact episode-code match.</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-scan" onclick="listScan()">Scan</button>
+        <button class="btn-pause" id="l-pause-btn" onclick="listPause()" disabled>Pause Matched</button>
+      </div>
+
+      <div class="status-msg" id="l-status"></div>
+      <div class="results-wrap" id="l-results"></div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+// ── helpers ────────────────────────────────────────────────────────────────
+
+function conn() {
+  return {
+    host:     document.getElementById('c-host').value.trim(),
+    port:     parseInt(document.getElementById('c-port').value, 10),
+    user:     document.getElementById('c-user').value,
+    password: document.getElementById('c-pass').value,
+  };
+}
+
+function setStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = `status-msg show ${type}`;
+  el.textContent = msg;
+}
+
+function clearStatus(id) {
+  const el = document.getElementById(id);
+  el.className = 'status-msg';
+  el.textContent = '';
+}
+
+function markErr(el, bad) {
+  el.classList.toggle('err', bad);
+}
+
+function validateConn() {
+  const host = document.getElementById('c-host');
+  const port = document.getElementById('c-port');
+  let ok = true;
+  markErr(host, !host.value.trim()); if (!host.value.trim()) ok = false;
+  const p = parseInt(port.value, 10);
+  markErr(port, isNaN(p) || p < 1 || p > 65535); if (isNaN(p) || p < 1 || p > 65535) ok = false;
+  return ok;
+}
+
+function badgeStatus(s) {
+  if (s === 'Seeding')  return `<span class="badge badge-seeding">${s}</span>`;
+  if (s === 'Stopped')  return `<span class="badge badge-stopped">${s}</span>`;
+  return `<span class="badge badge-other">${s}</span>`;
+}
+
+async function api(endpoint, body) {
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return resp.json();
+}
+
+// ── Ratio ──────────────────────────────────────────────────────────────────
+
+async function ratioScan() {
+  if (!validateConn()) { setStatus('r-status', 'err', 'Fix connection fields first.'); return; }
+  const ratioEl = document.getElementById('r-ratio');
+  const ratio = parseFloat(ratioEl.value);
+  markErr(ratioEl, isNaN(ratio) || ratio <= 0);
+  if (isNaN(ratio) || ratio <= 0) { setStatus('r-status', 'err', 'Ratio must be a positive number.'); return; }
+
+  setStatus('r-status', 'info', 'Scanning…');
+  document.getElementById('r-results').innerHTML = '';
+  document.getElementById('r-pause-btn').disabled = true;
+
+  try {
+    const data = await api('/api/ratio/scan', { ...conn(), ratio });
+    if (!data.success) { setStatus('r-status', 'err', data.error); return; }
+
+    if (data.count === 0) {
+      setStatus('r-status', 'warn', `No torrents found with ratio ≥ ${ratio}`);
+      return;
+    }
+
+    const seeding = data.torrents.filter(t => t.status === 6).length;
+    setStatus('r-status', 'ok', `Found ${data.count} torrent(s) above ratio ${ratio}. ${seeding} seeding (pausable). Total uploaded: ${data.total_uploaded_str}`);
+
+    document.getElementById('r-results').innerHTML = buildRatioTable(data.torrents);
+    document.getElementById('r-pause-btn').disabled = (seeding === 0);
+  } catch (e) {
+    setStatus('r-status', 'err', `Request failed: ${e.message}`);
+  }
+}
+
+function buildRatioTable(torrents) {
+  const rows = torrents.map(t => `
+    <tr>
+      <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(t.name)}">${esc(t.name)}</td>
+      <td style="text-align:right;font-weight:600;color:var(--warn)">${t.upload_ratio.toFixed(2)}</td>
+      <td>${t.total_size_str}</td>
+      <td>${t.uploaded_ever_str}</td>
+      <td>${badgeStatus(t.status_str)}</td>
+    </tr>`).join('');
+  return `<table>
+    <thead><tr><th>Name</th><th>Ratio</th><th>Size</th><th>Uploaded</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+async function ratioPause() {
+  if (!validateConn()) return;
+  const ratio = parseFloat(document.getElementById('r-ratio').value);
+  if (!confirm(`Pause all actively seeding torrents with ratio ≥ ${ratio}?`)) return;
+
+  setStatus('r-status', 'info', 'Sending pause command…');
+  try {
+    const data = await api('/api/ratio/pause', { ...conn(), ratio });
+    if (!data.success) { setStatus('r-status', 'err', data.error); return; }
+    setStatus('r-status', 'ok',
+      data.paused > 0
+        ? `Paused ${data.paused} torrent(s). ${data.skipped} already stopped (skipped).`
+        : 'No seeding torrents to pause.'
+    );
+    document.getElementById('r-pause-btn').disabled = true;
+    ratioScan(); // refresh
+  } catch (e) {
+    setStatus('r-status', 'err', `Request failed: ${e.message}`);
+  }
+}
+
+// ── List / Glob ────────────────────────────────────────────────────────────
+
+async function listScan() {
+  if (!validateConn()) { setStatus('l-status', 'err', 'Fix connection fields first.'); return; }
+
+  const threshEl = document.getElementById('l-threshold');
+  const globEl   = document.getElementById('l-glob');
+  const threshold = parseFloat(threshEl.value);
+  const glob_text = globEl.value.trim();
+
+  markErr(threshEl, isNaN(threshold) || threshold <= 0 || threshold > 1);
+  markErr(globEl,   !glob_text);
+  if (isNaN(threshold) || threshold <= 0 || threshold > 1) {
+    setStatus('l-status', 'err', 'Threshold must be between 0 and 1 (e.g. 0.8).'); return;
+  }
+  if (!glob_text) { setStatus('l-status', 'err', 'Paste some text into the list box first.'); return; }
+
+  setStatus('l-status', 'info', 'Scanning…');
+  document.getElementById('l-results').innerHTML = '';
+  document.getElementById('l-pause-btn').disabled = true;
+
+  try {
+    const data = await api('/api/list/scan', { ...conn(), glob_text, threshold });
+    if (!data.success) { setStatus('l-status', 'err', data.error); return; }
+
+    if (data.count === 0) {
+      setStatus('l-status', 'warn', `No torrents matched at threshold ${(threshold*100).toFixed(0)}%`);
+      return;
+    }
+
+    const pausable = data.torrents.filter(t => t.status !== 0).length;
+    setStatus('l-status', 'ok',
+      `Matched ${data.count} torrent(s) at ≥${(threshold*100).toFixed(0)}% name similarity. ${pausable} pausable.`
+    );
+    document.getElementById('l-results').innerHTML = buildListTable(data.torrents);
+    document.getElementById('l-pause-btn').disabled = (pausable === 0);
+  } catch (e) {
+    setStatus('l-status', 'err', `Request failed: ${e.message}`);
+  }
+}
+
+function buildListTable(torrents) {
+  const rows = torrents.map(t => {
+    const pct = Math.round(t.score * 100);
+    const epBadge = t.has_episode ? `<span class="badge badge-ep">${esc(t.episode_code)}</span>` : '';
+    return `<tr>
+      <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(t.name)}">${esc(t.name)}</td>
+      <td>
+        <span class="score-bar-wrap"><span class="score-bar" style="width:${pct}%"></span></span>
+        <span style="font-size:12px;color:var(--text-muted)">${pct}%</span>
+      </td>
+      <td>${epBadge}</td>
+      <td>${badgeStatus(t.status_str)}</td>
+    </tr>`;
+  }).join('');
+  return `<table>
+    <thead><tr><th>Name</th><th>Match</th><th>Episode</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+async function listPause() {
+  if (!validateConn()) return;
+  const threshold = parseFloat(document.getElementById('l-threshold').value);
+  const glob_text = document.getElementById('l-glob').value.trim();
+  if (!glob_text) return;
+
+  if (!confirm('Pause all matched non-stopped torrents?')) return;
+
+  setStatus('l-status', 'info', 'Sending pause command…');
+  try {
+    const data = await api('/api/list/pause', { ...conn(), glob_text, threshold });
+    if (!data.success) { setStatus('l-status', 'err', data.error); return; }
+    setStatus('l-status', 'ok',
+      data.paused > 0
+        ? `Paused ${data.paused} torrent(s). ${data.skipped} already stopped (skipped).`
+        : 'No active torrents to pause.'
+    );
+    document.getElementById('l-pause-btn').disabled = true;
+    listScan(); // refresh
+  } catch (e) {
+    setStatus('l-status', 'err', `Request failed: ${e.message}`);
+  }
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
