@@ -10,7 +10,9 @@ from flask import Flask, jsonify, render_template, request
 
 import pause_by_list as pl
 import transmission_high_ratio as hr
-from transmission_client import env_credentials
+import transmission_largest as lg
+import transmission_notfound as nf
+from transmission_client import env_credentials, format_bytes
 
 app = Flask(__name__)
 
@@ -108,6 +110,56 @@ def list_pause():
             threshold=float(data.get("threshold", 0.8)),
         )
         return jsonify({"success": True, **result})
+    except (urllib.error.URLError, OSError) as e:
+        return _conn_error(e)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
+# Largest endpoints
+# ---------------------------------------------------------------------------
+
+@app.route("/api/largest/scan", methods=["POST"])
+def largest_scan():
+    data = request.get_json(force=True)
+    try:
+        torrents = lg.scan_largest(**_conn(data), top=int(data.get("top", 10)))
+        total = sum(t["total_size"] for t in torrents)
+        return jsonify({
+            "success": True,
+            "torrents": torrents,
+            "count": len(torrents),
+            "total_size_str": format_bytes(total),
+        })
+    except (urllib.error.URLError, OSError) as e:
+        return _conn_error(e)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
+# Not-found endpoints
+# ---------------------------------------------------------------------------
+
+@app.route("/api/notfound/scan", methods=["POST"])
+def notfound_scan():
+    data = request.get_json(force=True)
+    try:
+        entries = nf.scan_notfound(
+            **_conn(data),
+            path=data.get("path", nf.DEFAULT_PATH),
+            top=int(data.get("top", 20)),
+        )
+        total = sum(e["size"] for e in entries)
+        return jsonify({
+            "success": True,
+            "entries": entries,
+            "count": len(entries),
+            "total_size_str": format_bytes(total),
+        })
+    except FileNotFoundError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
     except (urllib.error.URLError, OSError) as e:
         return _conn_error(e)
     except Exception as e:

@@ -1,0 +1,11 @@
+name: transmiscripts
+
+services:
+  app:
+    build: .
+    ports:
+      - "8073:8073"
+    environment:
+      - TRANSMIUSER=${TRANSMIUSER:-}
+      - TRANSMIPASS=${TRANSMIPASS:-}
+    restart: unless-stopped
