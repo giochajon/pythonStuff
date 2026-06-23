@@ -4,6 +4,7 @@ Flask API wrapping transmission_high_ratio and pause_by_list.
 Runs on 0.0.0.0:8073.
 """
 
+import os
 import urllib.error
 
 from flask import Flask, jsonify, render_template, request
@@ -20,8 +21,8 @@ app = Flask(__name__)
 def _conn(data: dict) -> dict:
     env_user, env_pass = env_credentials()
     return {
-        "host": data.get("host", "localhost"),
-        "port": int(data.get("port", 9091)),
+        "host": data.get("host") or os.environ.get("TRANSMISSION_HOST", "localhost"),
+        "port": int(data.get("port") or os.environ.get("TRANSMISSION_PORT", 9091)),
         "user": data.get("user") or env_user,
         "password": data.get("password") or env_pass,
     }
@@ -44,6 +45,8 @@ def index():
 def config():
     return jsonify({
         "notfound_path": nf.DEFAULT_PATH,
+        "transmission_host": os.environ.get("TRANSMISSION_HOST", "localhost"),
+        "transmission_port": int(os.environ.get("TRANSMISSION_PORT", 9091)),
     })
 
 
