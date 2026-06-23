@@ -12,7 +12,7 @@ import pause_by_list as pl
 import transmission_high_ratio as hr
 import transmission_largest as lg
 import transmission_notfound as nf
-from transmission_client import env_credentials, format_bytes
+from transmission_client import TransmissionClient, env_credentials, format_bytes
 
 app = Flask(__name__)
 
@@ -132,6 +132,25 @@ def largest_scan():
             "count": len(torrents),
             "total_size_str": format_bytes(total),
         })
+    except (urllib.error.URLError, OSError) as e:
+        return _conn_error(e)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/largest/pause", methods=["POST"])
+def largest_pause():
+    data = request.get_json(force=True)
+    torrent_id = data.get("id")
+    try:
+        torrent_id = int(torrent_id)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "id is required"}), 400
+
+    try:
+        client = TransmissionClient(**_conn(data))
+        client.pause_torrents([torrent_id])
+        return jsonify({"success": True, "paused": 1, "id": torrent_id})
     except (urllib.error.URLError, OSError) as e:
         return _conn_error(e)
     except Exception as e:
