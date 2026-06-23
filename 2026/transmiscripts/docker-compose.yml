@@ -4,8 +4,12 @@ services:
   app:
     build: .
     ports:
-      - "8073:8073"
+      - "${APP_PORT:-8073}:8073"
     environment:
       - TRANSMIUSER=${TRANSMIUSER:-}
       - TRANSMIPASS=${TRANSMIPASS:-}
+      - NOTFOUND_TRANSMISSION_PATH=${NOTFOUND_TRANSMISSION_PATH:-/home/giovas/dostb/transmi/complete}
+      - NOTFOUND_LOCAL_PATH=${NOTFOUND_CONTAINER_PATH:-/home/giovas/dostb/transmi/complete}
+    volumes:
+      - ${NOTFOUND_HOST_PATH:-/home/giovas/dostb/transmi/complete}:${NOTFOUND_CONTAINER_PATH:-/home/giovas/dostb/transmi/complete}
     restart: unless-stopped

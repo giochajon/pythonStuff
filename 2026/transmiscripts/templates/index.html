@@ -264,6 +264,20 @@ async function api(endpoint, body) {
   return resp.json();
 }
 
+async function loadConfig() {
+  try {
+    const resp = await fetch('/api/config');
+    const data = await resp.json();
+    if (data.notfound_path) {
+      document.getElementById('nf-path').value = data.notfound_path;
+    }
+  } catch (e) {
+    // Defaults in the page are enough if config cannot be loaded.
+  }
+}
+
+loadConfig();
+
 // ── Ratio ──────────────────────────────────────────────────────────────────
 
 async function ratioScan() {
@@ -513,11 +527,29 @@ function buildNotfoundTable(entries) {
       <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(e.name)}">${esc(e.name)}</td>
       <td style="color:var(--text-muted)">${esc(e.modified_str)}</td>
       <td style="text-align:right">${e.size_str}</td>
+      <td><button class="btn-pause btn-small" data-name="${esc(e.name)}" onclick="notfoundDelete(this.dataset.name)">Delete</button></td>
     </tr>`).join('');
   return `<table>
-    <thead><tr><th>#</th><th>Name</th><th>Modified</th><th>Size</th></tr></thead>
+    <thead><tr><th>#</th><th>Name</th><th>Modified</th><th>Size</th><th>Action</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
+}
+
+async function notfoundDelete(name) {
+  if (!validateConn()) return;
+  const path = document.getElementById('nf-path').value.trim();
+  if (!path) { setStatus('nf-status', 'err', 'Path is required.'); return; }
+  if (!confirm(`Delete this untracked entry from disk?\n\n${name}`)) return;
+
+  setStatus('nf-status', 'info', 'Deleting…');
+  try {
+    const data = await api('/api/notfound/delete', { ...conn(), path, name });
+    if (!data.success) { setStatus('nf-status', 'err', data.error); return; }
+    setStatus('nf-status', 'ok', `Deleted ${data.deleted.kind}: ${data.deleted.name}`);
+    notfoundScan();
+  } catch (e) {
+    setStatus('nf-status', 'err', `Request failed: ${e.message}`);
+  }
 }
 </script>
 </body>

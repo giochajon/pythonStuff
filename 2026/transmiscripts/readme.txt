@@ -65,20 +65,42 @@ Web UI / API
     POST /api/list/pause        { glob_text, threshold }
     POST /api/largest/scan      { top }
     POST /api/notfound/scan     { path, top }
+    POST /api/notfound/delete   { path, name }
 
 Docker
 ------
   Build and run with Docker Compose (recommended):
     docker compose up -d
 
+  If host port 8073 is already in use:
+    APP_PORT=8074 docker compose up -d
+
   The stack is named "transmiscripts"; containers appear as transmiscripts-app-1.
   TRANSMIUSER and TRANSMIPASS are forwarded from the host shell if set.
+
+  The Not in Transmission panel needs the app container to see the same
+  download files that Transmission reports over RPC. By default compose mounts:
+
+    /home/giovas/dostb/transmi/complete
+
+  into the same path inside the app container. Override these when your host
+  path, app-container path, or Transmission-reported path differ:
+
+    NOTFOUND_HOST_PATH=/host/downloads
+    NOTFOUND_CONTAINER_PATH=/downloads
+    NOTFOUND_TRANSMISSION_PATH=/downloads
+
+  The web UI scans the Transmission path and maps it to NOTFOUND_CONTAINER_PATH
+  before reading or deleting files.
 
   Or build and run manually:
     docker build -t transmiscripts .
     docker run -p 8073:8073 \
       -e TRANSMIUSER="your_username" \
       -e TRANSMIPASS="your_secret_password" \
+      -e NOTFOUND_TRANSMISSION_PATH="/downloads" \
+      -e NOTFOUND_LOCAL_PATH="/downloads" \
+      -v /host/downloads:/downloads \
       transmiscripts
 
   The web UI will be available at http://localhost:8073
