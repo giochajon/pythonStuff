@@ -271,12 +271,6 @@ async function loadConfig() {
     if (data.notfound_path) {
       document.getElementById('nf-path').value = data.notfound_path;
     }
-    if (data.transmission_host) {
-      document.getElementById('c-host').value = data.transmission_host;
-    }
-    if (data.transmission_port) {
-      document.getElementById('c-port').value = data.transmission_port;
-    }
   } catch (e) {
     // Defaults in the page are enough if config cannot be loaded.
   }

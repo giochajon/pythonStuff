@@ -77,8 +77,6 @@ Docker
 
   The stack is named "transmiscripts"; containers appear as transmiscripts-app-1.
   TRANSMIUSER and TRANSMIPASS are forwarded from the host shell if set.
-  The web UI defaults to TRANSMISSION_HOST / TRANSMISSION_PORT for the RPC
-  connection fields. In Docker, the default host is host.docker.internal.
 
   The Not in Transmission panel needs the app container to see the same
   download files that Transmission reports over RPC. By default compose mounts:
@@ -98,11 +96,8 @@ Docker
   Or build and run manually:
     docker build -t transmiscripts .
     docker run -d -p 8073:8073 \
-      --add-host=host.docker.internal:host-gateway \
       -e TRANSMIUSER="your_username" \
       -e TRANSMIPASS="your_secret_password" \
-      -e TRANSMISSION_HOST="host.docker.internal" \
-      -e TRANSMISSION_PORT="9091" \
       -e NOTFOUND_TRANSMISSION_PATH="/downloads/complete" \
       -e NOTFOUND_LOCAL_PATH="/downloads/complete" \
       -v /home/giovas/dostb/transmi:/downloads \
