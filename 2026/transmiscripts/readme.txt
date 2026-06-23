@@ -95,13 +95,17 @@ Docker
 
   Or build and run manually:
     docker build -t transmiscripts .
-    docker run -d -p 8073:8073 \
+    docker run -d --network host \
       -e TRANSMIUSER="your_username" \
       -e TRANSMIPASS="your_secret_password" \
       -e NOTFOUND_TRANSMISSION_PATH="/downloads/complete" \
       -e NOTFOUND_LOCAL_PATH="/downloads/complete" \
       -v /home/giovas/dostb/transmi:/downloads \
       transmiscripts
+
+  NOTE: --network host is required. Using -p 8073:8073 with bridge networking
+  causes "Connection refused" because localhost inside the container does not
+  reach the host machine where Transmission runs.
 
   If Transmission itself reports /home/giovas/dostb/transmi/complete as the
   download directory, set NOTFOUND_TRANSMISSION_PATH to that value instead:
