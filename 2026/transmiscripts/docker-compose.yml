@@ -3,17 +3,12 @@ name: transmiscripts
 services:
   app:
     build: .
-    ports:
-      - "${APP_PORT:-8073}:8073"
+    network_mode: "host"
     environment:
       - TRANSMIUSER=${TRANSMIUSER:-}
       - TRANSMIPASS=${TRANSMIPASS:-}
-      - TRANSMISSION_HOST=${TRANSMISSION_HOST:-host.docker.internal}
-      - TRANSMISSION_PORT=${TRANSMISSION_PORT:-9091}
       - NOTFOUND_TRANSMISSION_PATH=${NOTFOUND_TRANSMISSION_PATH:-/home/giovas/dostb/transmi/complete}
       - NOTFOUND_LOCAL_PATH=${NOTFOUND_CONTAINER_PATH:-/home/giovas/dostb/transmi/complete}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - ${NOTFOUND_HOST_PATH:-/home/giovas/dostb/transmi/complete}:${NOTFOUND_CONTAINER_PATH:-/home/giovas/dostb/transmi/complete}
     restart: unless-stopped
