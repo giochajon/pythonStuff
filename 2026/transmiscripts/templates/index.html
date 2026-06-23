@@ -69,6 +69,7 @@
   .btn-scan:hover:not(:disabled) { background: var(--accent-h); }
   .btn-pause { background: var(--danger); color: #fff; }
   .btn-pause:hover:not(:disabled) { background: var(--danger-h); }
+  .btn-small { padding: 5px 10px; font-size: 12px; }
 
   /* Status / alerts */
   .status-msg { font-size: 13px; padding: 8px 12px; border-radius: 5px; display: none; }
@@ -451,11 +452,27 @@ function buildLargestTable(torrents) {
       <td style="text-align:right;font-weight:600;color:var(--accent)">${t.total_size_str}</td>
       <td style="text-align:right">${t.upload_ratio.toFixed(2)}</td>
       <td>${t.uploaded_ever_str}</td>
+      <td><button class="btn-pause btn-small" data-name="${esc(t.name)}" onclick="largestPause(${t.id}, this.dataset.name)">Pause</button></td>
     </tr>`).join('');
   return `<table>
-    <thead><tr><th>#</th><th>Name</th><th>Size</th><th>Ratio</th><th>Uploaded</th></tr></thead>
+    <thead><tr><th>#</th><th>Name</th><th>Size</th><th>Ratio</th><th>Uploaded</th><th>Action</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
+}
+
+async function largestPause(id, name) {
+  if (!validateConn()) return;
+  if (!confirm(`Pause this torrent?\n\n${name}`)) return;
+
+  setStatus('lg-status', 'info', 'Sending pause command…');
+  try {
+    const data = await api('/api/largest/pause', { ...conn(), id });
+    if (!data.success) { setStatus('lg-status', 'err', data.error); return; }
+    setStatus('lg-status', 'ok', 'Paused 1 torrent.');
+    largestScan(); // refresh
+  } catch (e) {
+    setStatus('lg-status', 'err', `Request failed: ${e.message}`);
+  }
 }
 
 // ── Not in Transmission ────────────────────────────────────────────────────
