@@ -40,6 +40,13 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/api/config", methods=["GET"])
+def config():
+    return jsonify({
+        "notfound_path": nf.DEFAULT_PATH,
+    })
+
+
 # ---------------------------------------------------------------------------
 # Ratio endpoints
 # ---------------------------------------------------------------------------
@@ -178,6 +185,28 @@ def notfound_scan():
             "total_size_str": format_bytes(total),
         })
     except FileNotFoundError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except (urllib.error.URLError, OSError) as e:
+        return _conn_error(e)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/notfound/delete", methods=["POST"])
+def notfound_delete():
+    data = request.get_json(force=True)
+    name = data.get("name", "")
+    if not name:
+        return jsonify({"success": False, "error": "name is required"}), 400
+
+    try:
+        deleted = nf.delete_notfound_entry(
+            **_conn(data),
+            path=data.get("path", nf.DEFAULT_PATH),
+            name=name,
+        )
+        return jsonify({"success": True, "deleted": deleted})
+    except (FileNotFoundError, ValueError) as e:
         return jsonify({"success": False, "error": str(e)}), 400
     except (urllib.error.URLError, OSError) as e:
         return _conn_error(e)
