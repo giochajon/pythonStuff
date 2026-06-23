@@ -95,12 +95,17 @@ Docker
 
   Or build and run manually:
     docker build -t transmiscripts .
-    docker run -p 8073:8073 \
+    docker run -d -p 8073:8073 \
       -e TRANSMIUSER="your_username" \
       -e TRANSMIPASS="your_secret_password" \
-      -e NOTFOUND_TRANSMISSION_PATH="/downloads" \
-      -e NOTFOUND_LOCAL_PATH="/downloads" \
-      -v /host/downloads:/downloads \
+      -e NOTFOUND_TRANSMISSION_PATH="/downloads/complete" \
+      -e NOTFOUND_LOCAL_PATH="/downloads/complete" \
+      -v /home/giovas/dostb/transmi:/downloads \
       transmiscripts
+
+  If Transmission itself reports /home/giovas/dostb/transmi/complete as the
+  download directory, set NOTFOUND_TRANSMISSION_PATH to that value instead:
+
+    -e NOTFOUND_TRANSMISSION_PATH="/home/giovas/dostb/transmi/complete"
 
   The web UI will be available at http://localhost:8073
