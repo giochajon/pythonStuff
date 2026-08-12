@@ -1,6 +1,6 @@
 #astroid==2.2.5
 certifi==2026.7.22
-Django==4.2.30
+Django==5.2.16
 isort==4.3.21
 lazy-object-proxy==1.4.1
 mccabe==0.6.1
