@@ -30,7 +30,7 @@ python-dateutil==2.8.0
 pytz==2019.1
 setuptools==83.0.0
 six==1.12.0
-sqlparse==0.5.5
+sqlparse==0.6.0
 Werkzeug==3.1.6
 wheel==0.47.0
 wrapt==2.1.2
